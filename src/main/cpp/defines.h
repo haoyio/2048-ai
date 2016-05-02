@@ -1,12 +1,7 @@
-#ifndef DEFINES_H
-#define DEFINES_H
+#ifndef DEFINES_H_
+#define DEFINES_H_
 
 #include <stdlib.h>
-
-#define NUM_MOVES 4  // up, down, left, right
-
-#define FOUR_TILE_NIBBLE 2  // nibble representation of 4-tile (2^2)
-#define FOUR_TILE_SCORE 4
 
 // The 4x4 board is represented as a 64-bit word, where each tile packed into
 // a single 4-bit nibble. Because of this limitation, the maximum tile value is
@@ -16,6 +11,21 @@
 
 // The nibble shift can be computed as (r,c) -> shift (4*r + c), where (0,0) is
 // the LSB.
+
+#define NUM_MOVES 4  // 0 = up, 1 = down, 2 = left, 3 = right
+#define MAX_ROW 65536
+
+#define NUM_TILES_PER_BOARD 16
+#define NUM_NIBBLES_PER_SIDE 4
+#define NIBBLE_SHIFT 4
+
+#define NIBBLE_MASK 0xF
+#define ROW_MASK 0xFFFFULL
+
+#define FOUR_TILE_NIBBLE 2  // nibble representation of 4-tile (2^2)
+#define FOUR_TILE_SCORE 4
+
+#define NULL_BOARD ~0ULL
 
 typedef uint64_t Board;
 typedef uint16_t Row;
@@ -29,4 +39,4 @@ static inline unif_random(unsigned n) {
   return std::rand() % n;
 }
 
-#endif  // DEFINES_H
+#endif  // DEFINES_H_
