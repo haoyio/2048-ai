@@ -2,6 +2,7 @@
 #define GAME_H_
 
 #include <stdio.h>
+#include <vector>
 
 #include "../defines.h"
 
@@ -17,7 +18,7 @@ inline Row reverse_row(Row row) {
 }
 
 // 90% chance of generating a 2^1 tile, 10% a 2^2 tile.
-inline generate_tile() {
+inline Board generate_tile() {
   return (unif_random(10) < 9) ? 1 : 2;
 }
 

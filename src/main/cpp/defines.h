@@ -35,7 +35,7 @@ typedef int Action;
 typedef Action (*ActionFunction)(Board);
 
 // Uniformly random selection of an integer between 0 and n - 1.
-static inline unif_random(unsigned n) {
+inline unsigned unif_random(unsigned n) {
   return std::rand() % n;
 }
 
