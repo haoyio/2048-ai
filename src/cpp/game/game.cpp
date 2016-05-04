@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <assert.h>
+#include <cmath>
 #include <ctype.h>
 #include <math.h>
 #include <stdint.h>
@@ -16,16 +17,10 @@
 // 2-tiles. Correcting for 4-tiles generated is done at runtime by keeping
 // track of the number of 4-tiles generated so far and subtracting it away from
 // the sum of the scores of each row for any given board.
-float score_table[MAX_ROW];
-
 // Similar to above, generate tables for all possible pairs of
 // (new_row ^ old_row) after move.
-Row row_left_table[MAX_ROW];
-Row row_right_table[MAX_ROW];
-Board col_up_table[MAX_ROW];
-Board col_down_table[MAX_ROW];
-
-void init_tables() {
+Tables init_tables() {
+  Tables tables;
   for (unsigned row = 0; row < MAX_ROW; ++row) {
     // get value of each tile by nibble-shifting
     unsigned line[NUM_NIBBLES_PER_SIDE] = {
@@ -43,7 +38,28 @@ void init_tables() {
         score += (tile - 1) * (1 << tile);
       }
     }
-    score_table[row] = score;
+    tables.score_table[row] = score;
+
+    // by symmetry, execute a move to the left and rotate to generalize
+    for (int i = 0; i < 3; ++i) {
+      int j;
+      for (j = i + 1; j < 4; ++j) {
+        if (line[j] != 0) break;
+      }
+      if (j == 4) break;  // no more tiles to the right
+
+      if (line[i] == 0) {
+        line[i] = line[j];
+        line[j] = 0;
+        i--;  // retry this entry
+      } else if (line[i] == line[j]) {
+        if (line[i] != NIBBLE_MASK) {
+          // pretend that 32768 + 32768 = 32768 (representational limit)
+          line[i]++;
+        }
+        line[j] = 0;
+      }
+    }
 
     // compute all possible pairs of (new_row ^ old_row) after move
     Row result = (line[0] <<  0) |
@@ -53,11 +69,12 @@ void init_tables() {
     Row rev_result = reverse_row(result);
     unsigned rev_row = reverse_row(row);
 
-    row_left_table [    row] =                row  ^                result;
-    row_right_table[rev_row] =            rev_row  ^            rev_result;
-    col_up_table   [    row] = unpack_col(    row) ^ unpack_col(    result);
-    col_down_table [rev_row] = unpack_col(rev_row) ^ unpack_col(rev_result);
+    tables.row_left_table [    row] =                row  ^                result;
+    tables.row_right_table[rev_row] =            rev_row  ^            rev_result;
+    tables.col_up_table   [    row] = unpack_col(    row) ^ unpack_col(    result);
+    tables.col_down_table [rev_row] = unpack_col(rev_row) ^ unpack_col(rev_result);
   }
+  return tables;
 }
 
 // Get value of board by row-shifting (assume board formed by 2-tiles only).
@@ -68,8 +85,8 @@ float score_helper(Board board, const float* table) {
          table[(board >> 48) & ROW_MASK];
 }
 
-float score_board(Board board) {
-  return score_helper(board, score_table);
+float score_board(Board board, Tables& tables) {
+  return score_helper(board, tables.score_table);
 }
 
 Board init_board() {
@@ -96,6 +113,8 @@ Board insert_random_tile(Board board, Board tile) {
 
 void play_game(ActionFunction action) {
   Board board = init_board();
+  Tables tables = init_tables();
+
   int imove = 0;
   int score_penalty = 0;  // "penalty" for obtaining free 4-tiles
 
@@ -105,17 +124,17 @@ void play_game(ActionFunction action) {
 
     // check game termination (no legal moves left)
     for (move = 0; move < NUM_MOVES; ++move) {
-      if (execute_action(move, board) != board) break;
+      if (execute_action(move, board, tables) != board) break;
     }
     if (move == NUM_MOVES) break;
 
     printf("\nMove #%d, current score = %.0f\n", ++imove,
-           score_board(board) - score_penalty);
+           score_board(board, tables) - score_penalty);
 
     move = action(board);
     if (move < 0) break;
 
-    new_board = execute_action(move, board);
+    new_board = execute_action(move, board, tables);
     if (new_board == board) {
       printf("Illegal move!\n");
       --imove;
@@ -129,7 +148,8 @@ void play_game(ActionFunction action) {
 
   print_board(board);
   printf("\nGame over. Your score is %.0f and the maximum tile is %d.\n",
-         score_board(board) - score_penalty, max_tile(board));
+         score_board(board, tables) - score_penalty,
+         int(std::pow(2, max_tile(board))));
 }
 
 void print_board(Board board) {
@@ -181,54 +201,54 @@ Board transpose(Board board) {
   return board;
 }
 
-Board execute_up(Board board) {
+Board execute_up(Board board, Tables& tables) {
   Board ret = board;
   Board t = transpose(board);
-  ret ^= col_up_table[(t >>  0) & ROW_MASK] <<  0;
-  ret ^= col_up_table[(t >> 16) & ROW_MASK] <<  4;
-  ret ^= col_up_table[(t >> 32) & ROW_MASK] <<  8;
-  ret ^= col_up_table[(t >> 48) & ROW_MASK] << 12;
+  ret ^= tables.col_up_table[(t >>  0) & ROW_MASK] <<  0;
+  ret ^= tables.col_up_table[(t >> 16) & ROW_MASK] <<  4;
+  ret ^= tables.col_up_table[(t >> 32) & ROW_MASK] <<  8;
+  ret ^= tables.col_up_table[(t >> 48) & ROW_MASK] << 12;
   return ret;
 }
 
-Board execute_down(Board board) {
+Board execute_down(Board board, Tables& tables) {
   Board ret = board;
   Board t = transpose(board);
-  ret ^= col_down_table[(t >>  0) & ROW_MASK] <<  0;
-  ret ^= col_down_table[(t >> 16) & ROW_MASK] <<  4;
-  ret ^= col_down_table[(t >> 32) & ROW_MASK] <<  8;
-  ret ^= col_down_table[(t >> 48) & ROW_MASK] << 12;
+  ret ^= tables.col_down_table[(t >>  0) & ROW_MASK] <<  0;
+  ret ^= tables.col_down_table[(t >> 16) & ROW_MASK] <<  4;
+  ret ^= tables.col_down_table[(t >> 32) & ROW_MASK] <<  8;
+  ret ^= tables.col_down_table[(t >> 48) & ROW_MASK] << 12;
   return ret;
 }
 
-Board execute_left(Board board) {
+Board execute_left(Board board, Tables& tables) {
   Board ret = board;
-  ret ^= Board(row_left_table[(board >>  0) & ROW_MASK]) <<  0;
-  ret ^= Board(row_left_table[(board >> 16) & ROW_MASK]) << 16;
-  ret ^= Board(row_left_table[(board >> 32) & ROW_MASK]) << 32;
-  ret ^= Board(row_left_table[(board >> 48) & ROW_MASK]) << 48;
+  ret ^= Board(tables.row_left_table[(board >>  0) & ROW_MASK]) <<  0;
+  ret ^= Board(tables.row_left_table[(board >> 16) & ROW_MASK]) << 16;
+  ret ^= Board(tables.row_left_table[(board >> 32) & ROW_MASK]) << 32;
+  ret ^= Board(tables.row_left_table[(board >> 48) & ROW_MASK]) << 48;
   return ret;
 }
 
-Board execute_right(Board board) {
+Board execute_right(Board board, Tables& tables) {
   Board ret = board;
-  ret ^= Board(row_right_table[(board >>  0) & ROW_MASK]) <<  0;
-  ret ^= Board(row_right_table[(board >> 16) & ROW_MASK]) << 16;
-  ret ^= Board(row_right_table[(board >> 32) & ROW_MASK]) << 32;
-  ret ^= Board(row_right_table[(board >> 48) & ROW_MASK]) << 48;
+  ret ^= Board(tables.row_right_table[(board >>  0) & ROW_MASK]) <<  0;
+  ret ^= Board(tables.row_right_table[(board >> 16) & ROW_MASK]) << 16;
+  ret ^= Board(tables.row_right_table[(board >> 32) & ROW_MASK]) << 32;
+  ret ^= Board(tables.row_right_table[(board >> 48) & ROW_MASK]) << 48;
   return ret;
 }
 
-Board execute_action(Action action, Board board) {
+Board execute_action(Action action, Board board, Tables& tables) {
   switch (action) {
     case 0:
-      return execute_up(board);
+      return execute_up(board, tables);
     case 1:
-      return execute_down(board);
+      return execute_down(board, tables);
     case 2:
-      return execute_left(board);
+      return execute_left(board, tables);
     case 3:
-      return execute_right(board);
+      return execute_right(board, tables);
     default:
       return NULL_BOARD;
   }

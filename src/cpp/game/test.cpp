@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 
 #include "../defines.h"
@@ -15,8 +16,37 @@ void test_print() {
   }
 }
 
+Action user_move(Board board) {
+  print_board(board);
+  int move;
+  std::cout << "Please enter 0 (up), 1 (down), 2 (left), or 3 (right): ";
+  std::cin >> move;
+  std::cout << "You input ";
+  switch (move) {
+    case 0:
+      std::cout << "up\n";
+      return 0;
+    case 1:
+      std::cout << "down\n";
+      return 1;
+    case 2:
+      std::cout << "left\n";
+      return 2;
+    case 3:
+      std::cout << "right\n";
+      return 3;
+    default:
+      std::cout << "an invalid character, ending game...\n";
+      return -1;
+  }
+}
+
+void test_game() {
+  play_game(user_move);
+}
+
 int main() {
-  test_print();
+  test_game();
 
   return 0;
 }

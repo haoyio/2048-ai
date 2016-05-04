@@ -13,6 +13,14 @@ struct Game {
   Reward score;
 };
 
+struct Tables {
+  float score_table[MAX_ROW];
+  Row row_left_table[MAX_ROW];
+  Row row_right_table[MAX_ROW];
+  Board col_up_table[MAX_ROW];
+  Board col_down_table[MAX_ROW];
+};
+
 inline Board unpack_col(Row row) {
   Board tmp = row;
   return (tmp | (tmp << 12ULL) | (tmp << 24ULL) | (tmp << 36ULL)) & COL_MASK;
@@ -27,9 +35,9 @@ inline Board generate_tile() {
   return (unif_random(10) < 9) ? 1 : 2;
 }
 
-void init_score_table();
+Tables init_tables();
 float score_helper(Board board, const float* table);
-float score_board(Board board);
+float score_board(Board board, Tables& tables);
 
 Board init_board();
 Board insert_random_tile(Board board, Board tile);
@@ -40,10 +48,10 @@ int max_tile(Board board);
 int count_empty(Board board);
 Board transpose(Board board);
 
-Board execute_up(Board board);
-Board execute_down(Board board);
-Board execute_left(Board board);
-Board execute_right(Board board);
-Board execute_action(Action action, Board board);
+Board execute_up(Board board, Tables& tables);
+Board execute_down(Board board, Tables& tables);
+Board execute_left(Board board, Tables& tables);
+Board execute_right(Board board, Tables& tables);
+Board execute_action(Action action, Board board, Tables& tables);
 
 #endif  // GAME_H_
