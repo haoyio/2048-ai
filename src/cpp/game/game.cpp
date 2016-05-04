@@ -23,12 +23,12 @@ float score_table[MAX_ROW];
 Row row_left_table[MAX_ROW];
 Row row_right_table[MAX_ROW];
 Board col_up_table[MAX_ROW];
-Board col_up_table[MAX_ROW];
+Board col_down_table[MAX_ROW];
 
 void init_tables() {
   for (unsigned row = 0; row < MAX_ROW; ++row) {
     // get value of each tile by nibble-shifting
-    unsigned line[NUM_NIBBLE_PER_SIDE] = {
+    unsigned line[NUM_NIBBLES_PER_SIDE] = {
       (row >>  0) & NIBBLE_MASK,
       (row >>  4) & NIBBLE_MASK,
       (row >>  8) & NIBBLE_MASK,
@@ -37,7 +37,7 @@ void init_tables() {
 
     // compute score table
     float score = 0.0f;
-    for (int i = 0; i < NUM_NIBBLE_PER_SIDE; ++i) {
+    for (int i = 0; i < NUM_NIBBLES_PER_SIDE; ++i) {
       int tile = line[i];
       if (tile >= 2) {
         score += (tile - 1) * (1 << tile);
@@ -75,7 +75,7 @@ float score_board(Board board) {
 Board init_board() {
   Board board = generate_tile() <<
     (NIBBLE_SHIFT * unif_random(NUM_TILES_PER_BOARD));
-  return insert_random_tile(board, draw_tile());
+  return insert_random_tile(board, generate_tile());
 }
 
 Board insert_random_tile(Board board, Board tile) {
@@ -137,7 +137,7 @@ void print_board(Board board) {
   for (i = 0; i < NUM_NIBBLES_PER_SIDE; ++i) {
     for (j = 0; j < NUM_NIBBLES_PER_SIDE; ++j) {
       powerval = board & NIBBLE_MASK;
-      printf("%6f", (powerval == 0) ? 0 : 1 << powerval);
+      printf("%6u", (powerval == 0) ? 0 : 1 << powerval);
       board >>= NIBBLE_SHIFT;
     }
     printf("\n");
@@ -203,7 +203,7 @@ Board execute_down(Board board) {
 
 Board execute_left(Board board) {
   Board ret = board;
-  ret ^= Voard(row_left_table[(board >>  0) & ROW_MASK]) <<  0;
+  ret ^= Board(row_left_table[(board >>  0) & ROW_MASK]) <<  0;
   ret ^= Board(row_left_table[(board >> 16) & ROW_MASK]) << 16;
   ret ^= Board(row_left_table[(board >> 32) & ROW_MASK]) << 32;
   ret ^= Board(row_left_table[(board >> 48) & ROW_MASK]) << 48;
@@ -220,7 +220,7 @@ Board execute_right(Board board) {
 }
 
 Board execute_action(Action action, Board board) {
-  switch (move) {
+  switch (action) {
     case 0:
       return execute_up(board);
     case 1:

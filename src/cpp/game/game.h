@@ -13,6 +13,11 @@ struct Game {
   Reward score;
 };
 
+inline Board unpack_col(Row row) {
+  Board tmp = row;
+  return (tmp | (tmp << 12ULL) | (tmp << 24ULL) | (tmp << 36ULL)) & COL_MASK;
+}
+
 inline Row reverse_row(Row row) {
   return (row >> 12) | ((row >> 4) & 0x00F0) | ((row << 4) & 0x0F00) | (row << 12);
 }

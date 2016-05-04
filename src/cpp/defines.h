@@ -1,6 +1,9 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
+#include <cstdlib>
+#include <ctime>
+
 #include <stdlib.h>
 
 // The 4x4 board is represented as a 64-bit word, where each tile packed into
@@ -21,6 +24,7 @@
 
 #define NIBBLE_MASK 0xF
 #define ROW_MASK 0xFFFFULL
+#define COL_MASK 0x000F000F000F000FULL
 
 #define FOUR_TILE_NIBBLE 2  // nibble representation of 4-tile (2^2)
 #define FOUR_TILE_SCORE 4
@@ -36,6 +40,7 @@ typedef Action (*ActionFunction)(Board);
 
 // Uniformly random selection of an integer between 0 and n - 1.
 inline unsigned unif_random(unsigned n) {
+  std::srand(time(NULL));
   return std::rand() % n;
 }
 
