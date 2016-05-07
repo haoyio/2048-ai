@@ -40,14 +40,6 @@ class Expectimax {
   private:
     float heur_score_table[MAX_ROW];
 
-    void init_heur_score_table();
-    float score_heur_board(Board board);
-    float score_helper(Board board, const float* table);
-    float score_move_node(EvalState& state, Board board, float cprob);
-    float score_tile_choose_node(EvalState& state, Board board, float cprob);
-    float score_toplevel_move_h(EvalState& state, Board board, Action move);
-    float score_toplevel_move(Board board, Action move);
-
   public:
     Expectimax();
     Expectimax(const Expectimax& copy_from);
