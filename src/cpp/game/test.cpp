@@ -41,13 +41,13 @@ Action user_move(Board board) {
   }
 }
 
-void test_game() {
+void test_game_manual() {
   play_game(user_move);
 }
 
 int main() {
   test_print();
-  test_game();
+  test_game_manual();
 
   return 0;
 }

@@ -111,11 +111,13 @@ Board insert_random_tile(Board board, Board tile) {
   return board | tile;
 }
 
-void play_game(ActionFunction action) {
+Game play_game(ActionFunction action) {
   Board board = init_board();
   Tables tables = init_tables();
 
-  int imove = 0;
+  Game game;
+  game.state.push_back(board);
+
   int score_penalty = 0;  // "penalty" for obtaining free 4-tiles
 
   while (true) {
@@ -128,8 +130,8 @@ void play_game(ActionFunction action) {
     }
     if (move == NUM_MOVES) break;
 
-    printf("\nMove #%d, current score = %.0f\n", ++imove,
-           score_board(board, tables) - score_penalty);
+    //printf("\nMove #%d, current score = %.0f\n", game.state.size(),
+    //       score_board(board, tables) - score_penalty);
 
     move = action(board);
     if (move < 0) break;
@@ -137,19 +139,27 @@ void play_game(ActionFunction action) {
     new_board = execute_action(move, board, tables);
     if (new_board == board) {
       printf("Illegal move!\n");
-      --imove;
-      continue;
+      break;  // NOTE: replace break statement with below lines when testing
+      //--imove;
+      //continue;
     }
 
     Board tile = generate_tile();
     if (tile == FOUR_TILE_NIBBLE) score_penalty += FOUR_TILE_SCORE;
     board = insert_random_tile(new_board, tile);
+
+    game.state.push_back(board);
+    game.action.push_back(move);
   }
 
+  game.final_score = static_cast<Reward>(score_board(board, tables) - score_penalty);
+  game.max_tile = static_cast<Reward>(std::pow(2, max_tile(board)));
+
   print_board(board);
-  printf("\nGame over. Your score is %.0f and the maximum tile is %d.\n",
-         score_board(board, tables) - score_penalty,
-         int(std::pow(2, max_tile(board))));
+  printf("\nGame over. Your score is %d and the maximum tile is %d.\n",
+         game.final_score, game.max_tile);
+
+  return game;
 }
 
 void print_board(Board board) {

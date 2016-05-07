@@ -9,8 +9,8 @@
 struct Game {
   std::vector<Board> state;
   std::vector<Action> action;
-  std::vector<Reward> reward;  // score added per move
-  Reward score;
+  Reward final_score;
+  Reward max_tile;
 };
 
 struct Tables {
@@ -41,7 +41,7 @@ float score_board(Board board, Tables& tables);
 
 Board init_board();
 Board insert_random_tile(Board board, Board tile);
-void play_game(ActionFunction action);
+Game play_game(ActionFunction action);
 void print_board(Board board);
 
 int max_tile(Board board);
