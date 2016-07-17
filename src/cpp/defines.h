@@ -44,4 +44,19 @@ inline unsigned unif_random(unsigned n) {
   return std::rand() % n;
 }
 
+// Transpose rows/columns in a board:
+//   0123       048c
+//   4567  -->  159d
+//   89ab       26ae
+//   cdef       37bf
+// Bit hack courtesy: kcwu
+Board transpose(Board board) {
+  Board tmp;
+  tmp = (board ^ (board >> 12)) & 0x0000F0F00000F0F0ULL;
+  board ^= tmp ^ (tmp << 12);
+  tmp = (board ^ (board >> 24)) & 0x00000000FF00FF00ULL;
+  board ^= tmp ^ (tmp << 24);
+  return board;
+}
+
 #endif  // DEFINES_H_

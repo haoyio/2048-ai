@@ -79,10 +79,10 @@ Tables init_tables() {
 
 // Get value of board by row-shifting (assume board formed by 2-tiles only).
 float score_helper(Board board, const float* table) {
-  return table[(board >>  0) & ROW_MASK] +
-         table[(board >> 16) & ROW_MASK] +
-         table[(board >> 32) & ROW_MASK] +
-         table[(board >> 48) & ROW_MASK];
+  return table[(board >>  0) & ROW_MASK]
+       + table[(board >> 16) & ROW_MASK]
+       + table[(board >> 32) & ROW_MASK]
+       + table[(board >> 48) & ROW_MASK];
 }
 
 float score_board(Board board, Tables& tables) {
@@ -196,21 +196,6 @@ int count_empty(Board board) {
   return board;
 }
 
-// Transpose rows/columns in a board:
-//   0123       048c
-//   4567  -->  159d
-//   89ab       26ae
-//   cdef       37bf
-// Bit hack courtesy: kcwu
-Board transpose(Board board) {
-  Board tmp;
-  tmp = (board ^ (board >> 12)) & 0x0000F0F00000F0F0ULL;
-  board ^= tmp ^ (tmp << 12);
-  tmp = (board ^ (board >> 24)) & 0x00000000FF00FF00ULL;
-  board ^= tmp ^ (tmp << 24);
-  return board;
-}
-
 Board execute_up(Board board, Tables& tables) {
   Board ret = board;
   Board t = transpose(board);
@@ -263,4 +248,3 @@ Board execute_action(Action action, Board board, Tables& tables) {
       return NULL_BOARD;
   }
 }
-
